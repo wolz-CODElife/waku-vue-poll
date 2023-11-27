@@ -86,19 +86,18 @@ export function useWaku() {
     
         if(!decoder.value) decoder.value = createDecoder(contentTopic.value)
         
-        const callback = (wakuMessage: any) => {
-            console.log(wakuMessage);
-            
-            if (!wakuMessage.payload) return
-            const newMessage = ChatMessage.decode(wakuMessage.payload)
-            console.log("New Messages: ",  newMessage);
-        }
         try{
             if(!subscription.value) subscription.value = await wakuNode.value.filter.createSubscription()
             if (wakuNode.value?.filter && subscription.value) {
-                const newMessage = subscription.value.subscribe([decoder.value], callback)
-                queries.value = newMessage
-                wakuStore.queries = newMessage
+                console.log("Subscribing");
+                
+                subscription.value.subscribe([decoder.value], (wakuMessage: any) => {
+                    console.log(wakuMessage);
+                    
+                    if (!wakuMessage.payload) return
+                    const newMessage = ChatMessage.decode(wakuMessage.payload)
+                    console.log("New Messages: ",  newMessage);
+                })
     
             } else {
                 console.error('WakuNode or WakuNode filter not available.');

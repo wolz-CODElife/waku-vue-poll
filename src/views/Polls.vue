@@ -21,16 +21,18 @@
   
 <script lang="ts">
 import { defineComponent, onMounted } from 'vue'
+import { useWaku } from '../composables/waku'
 import { useWakuStore } from '../store/wakuStore'
 
 
 export default defineComponent({
   setup() {
-      const wakuStore = useWakuStore()
+    const wakuStore = useWakuStore()
+      const { subscribe } = useWaku()
 
       onMounted(() => {
         // Subscribe to contentTopic on waku node when the component is mounted
-        wakuStore.subscribe()
+          subscribe()
       })
 
       return {

@@ -149,102 +149,64 @@
   </transition>
 </template>
 
-<script lang="ts">
-    import { defineComponent, ref } from 'vue'
-    import { useRouter } from 'vue-router'
-    import { useWakuStore } from '../store/wakuStore'
-    import {Poll} from '../interfaces'
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useWakuStore } from '../store/wakuStore'
+import { Poll } from '../interfaces'
 
-    export default defineComponent({
-      setup() {
-        const isOpen = ref<boolean>(false)
-        const isModalOpen = ref<boolean>(false)
-        const routes = <any>["Home", "Polls"]
-        const questionLength = ref<string>("100")
-        const poll = ref<Poll>({
-          question: "",
-          options: {
-            a: "",
-            b: "",
-            c: "",
-            d: "",
-            e: ""
-          }
-        })
-        const useRoute = useRouter()
-        const wakuStore = useWakuStore()
-        const copied = ref<boolean>(false)
+const isOpen = ref<boolean>(false)
+const isModalOpen = ref<boolean>(false)
+const routes = <any>["Home", "Polls"]
+const questionLength = ref<string>("100")
+const poll = ref<Poll>({
+ question: "",
+ options: {
+   a: "",
+   b: "",
+   c: "",
+   d: "",
+   e: ""
+ }
+})
+const useRoute = useRouter()
+const wakuStore = useWakuStore()
+const copied = ref<boolean>(false)
 
-        return {
-            isOpen,
-            isModalOpen,
-            routes,
-            questionLength,
-            poll,
-            useRoute,
-            wakuStore,
-            copied
-        }
-      }, 
-      data() {
-        return {
-          isOpen: true,
-          isModalOpen: true
-        };
-      },
-      methods: {
-        onToggle() {
-          this.isModalOpen = !this.isModalOpen;
-        },
-        copyToClipboard() {
-          const textToCopy = this.wakuStore.sender;
-          
-          // Create a textarea element to hold the text
-          const textarea = document.createElement('textarea');
-          textarea.value = textToCopy;
-          document.body.appendChild(textarea);
+function onToggle() {
+ isModalOpen.value = !isModalOpen.value
+}
 
-          // Select the text in the textarea
-          textarea.select();
-          document.execCommand('copy');
+function copyToClipboard() {
+ const textToCopy = wakuStore.sender
+ const textarea = document.createElement('textarea')
+ textarea.value = textToCopy
+ document.body.appendChild(textarea)
+ textarea.select()
+ document.execCommand('copy')
+ document.body.removeChild(textarea)
+ copied.value = true
+ setTimeout(()=> {
+   copied.value = false
+ }, 1000)
+}
 
-          // Remove the textarea element
-          document.body.removeChild(textarea);
+function sendMessage() {
+ const stringifiedMessage = JSON.stringify(poll.value)
+ console.log(stringifiedMessage)
+ wakuStore.publish(wakuStore.sender, stringifiedMessage)
+ poll.value = {
+   question: "",
+   options: {
+     a: "",
+     b: "",
+     c: "",
+     d: "",
+     e: ""
+   }
+ }
+}
 
-          // Optionally, provide user feedback (e.g., a toast or alert)
-          this.copied = true
-
-          setTimeout(()=> {
-            this.copied = false
-          }, 1000)
-        },
-        sendMessage() {
-          const stringifiedMessage = JSON.stringify(this.poll)
-          console.log(stringifiedMessage);
-          
-          // send a message
-          this.wakuStore.publish(this.wakuStore.sender, stringifiedMessage)
-
-          // reset question state
-          this.poll = {
-            question: "",
-            options: {
-              a: "",
-              b: "",
-              c: "",
-              d: "",
-              e: ""
-            }
-          }
-        }
-      },
-      computed: {
-        currentRouteName() {
-            return this.$route.name;
-        },
-        isModalVisible() {
-          return this.isModalOpen;
-        },
-      }
-    })
+const currentRouteName = useRoute.currentRoute.value.name
+const isModalVisible = isModalOpen.value
 </script>

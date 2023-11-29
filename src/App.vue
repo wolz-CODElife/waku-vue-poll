@@ -1,22 +1,14 @@
-<script lang="ts">
-import { defineComponent, onMounted } from 'vue';
+<script setup lang="ts">
+import { onMounted } from 'vue';
 import { useWakuStore } from './store/wakuStore.ts';
 import NavBar from '@/components/NavBar.vue';
 
-export default defineComponent({
-  setup() {
-    const wakuStore = useWakuStore();
-    // Initialize Waku node when the component is mounted
-    onMounted(() => {
-      wakuStore.start()      
-    });
 
-    
-    return {
-      wakuStore,
-    };
-  },
-  components: { NavBar },
+
+// Initialize Waku node when the component is mounted
+onMounted(() => {
+  const wakuStore = useWakuStore();
+ wakuStore.start();
 });
 </script>
 

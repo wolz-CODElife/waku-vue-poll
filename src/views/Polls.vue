@@ -19,57 +19,47 @@
   </div>
 </template>
   
-<script lang="ts">
-import { defineComponent, onMounted } from 'vue'
+<script setup lang="ts">
+import { onMounted } from 'vue'
 import { useWakuStore } from '../store/wakuStore'
 
+const wakuStore = useWakuStore()
 
-export default defineComponent({
-  setup() {
-      const wakuStore = useWakuStore()
+onMounted(() => {
+ // Subscribe to contentTopic on waku node when the component is mounted
+ wakuStore.subscribe()
+})
 
-      onMounted(() => {
-        // Subscribe to contentTopic on waku node when the component is mounted
-        wakuStore.subscribe()
-      })
-
-      return {
-        wakuStore
-      }
-    },
-    data() {
-      return{
-        polls: [{ 
-          id: "1", 
-            question: "Is this the best poll ever?", 
-            options: ["Yes!", "No way!"], 
-            votes : [{ 
-              userId: "1", 
-              optionIndex: 0
-            }, {
-              userId: "2", 
-              optionIndex: 1
-            }] 
-          },
-          { 
-            id: "2", 
-            question: "What is your favorite color?", 
-            options: ["Red", "Blue", "Green"], 
-            votes: [{ 
-              userId: "1", 
-              optionIndex: 0
-            }, {
-              userId: "2", 
-              optionIndex: 1
-            }]
-          },
-          { 
-            id: "3", 
-            question: "Should we build an AI?", 
-            options: ["Yes, please.", "No thanks."],
-            votes: []
-          }]
-      }
-    }
-  })
+const polls = [
+ { 
+   id: "1", 
+   question: "Is this the best poll ever?", 
+   options: ["Yes!", "No way!"], 
+   votes : [{ 
+     userId: "1", 
+     optionIndex: 0
+   }, {
+     userId: "2", 
+     optionIndex: 1
+   }] 
+ },
+ { 
+   id: "2", 
+   question: "What is your favorite color?", 
+   options: ["Red", "Blue", "Green"], 
+   votes: [{ 
+     userId: "1", 
+     optionIndex: 0
+   }, {
+     userId: "2", 
+     optionIndex: 1
+   }]
+ },
+ { 
+   id: "3", 
+   question: "Should we build an AI?", 
+   options: ["Yes, please.", "No thanks."],
+   votes: []
+ }
+]
 </script>

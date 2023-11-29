@@ -1,11 +1,8 @@
-// wakuStore.ts
-import { defineStore } from 'pinia';
+import { reactive } from 'vue';
 import { LightNode, Decoder, Encoder } from "@waku/sdk";
 
 
-export const useWakuStore = defineStore({
-    id: 'waku',
-    state: () => ({
+export const useWakuStore = reactive({
         wakuNode: null as LightNode | null,
         status: 'connecting...',
         contentTopic: "/waku-vue-poll/1/polls/proto",
@@ -13,5 +10,8 @@ export const useWakuStore = defineStore({
         encoder: null as Encoder | null,
         decoder: null as Decoder | null,
         queries: null as any
-    })
-});
+})
+
+    
+
+

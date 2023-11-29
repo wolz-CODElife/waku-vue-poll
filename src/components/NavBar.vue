@@ -139,7 +139,7 @@ const poll = ref<Poll>({
   }
 })
 const Route = useRoute()
-const wakuStore = useWakuStore()
+const wakuStore = useWakuStore
 const { publish } = useWaku()
 const copied = ref<boolean>(false)
 

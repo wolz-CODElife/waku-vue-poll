@@ -21,18 +21,13 @@
   
 <script lang="ts" setup>
 import {  onMounted } from 'vue'
-import { useWaku } from '../composables/waku'
-
-
-
-
+import { useWaku } from '../composables/waku';
 
 
 
     const { subscribe } = useWaku()
 
       onMounted(() => {
-        // Subscribe to contentTopic on waku node when the component is mounted
           subscribe()
       })
 
@@ -68,7 +63,6 @@ import { useWaku } from '../composables/waku'
             options: ["Yes, please.", "No thanks."],
             votes: []
           }]
-      }
-    }
+
 
 </script>

@@ -144,18 +144,20 @@ export function useWaku() {
 				ephemeral: false,
 			});
 
-		const timestamp = Date.now();
-		const msgID = timestamp + Math.floor(Math.random() * 90000).toString();
+		// const timestamp = Date.now();
+		// const msgID = timestamp + Math.floor(Math.random() * 90000).toString();
 
-		const protoMessage = ChatMessage.create({
-			timestamp: timestamp,
-			id: msgID,
-			sender: sender,
-			message: message,
-		});
+		// const protoMessage = ChatMessage.create({
+		// 	timestamp: timestamp,
+		// 	id: msgID,
+		// 	sender: sender,
+		// 	message: message,
+		// });
 
-		const serializedMessage = ChatMessage.encode(protoMessage).finish();
+		// const serializedMessage = ChatMessage.encode(protoMessage).finish();
 		console.log(wakuNode.value.lightPush.send);
+		console.log(sender);
+		
 
 		try {
 			console.log(lightpush.value);

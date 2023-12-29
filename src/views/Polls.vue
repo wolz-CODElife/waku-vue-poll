@@ -1,15 +1,22 @@
 <template>
   <div class="text-center flex flex-col items-center">
     <h1 class="text-3xl">Vote Public Polls 🗳️</h1>
-    <p class="mb-4 font-bold">Polls (100)</p>
+    <p class="mb-4 font-bold">Polls ({{ polls.length }})</p>
     <div class="w-full max-w-lg p-10 h-[calc(100vh-300px)] md:h-[calc(100vh-196px)] overflow-y-auto mx-auto my-auto text-center rounded-xl shadow-lg bg-white" >
       <!-- Blackbox Create a list of polls -->
-      <div class="w-full text-start" v-for="poll in polls" :key="poll.id">
+      <div class="w-full text-start" v-if="polls.length" v-for="poll in polls" :key="poll.msgid">
         <div class="">
-          <p class="font-semibold">Question {{poll.id}}: {{ poll.question }}</p>
+          <p class="font-semibold">Question : {{ poll.message?.question }}</p>
           <form>
-            <div v-for="option in poll.options" :key="option" class="rounded-full flex items-center justify-between px-3 py-2 my-4 text-sm leading-6 hover:bg-gray-100 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
-              {{option}} <input type="radio" :name="poll.id" class="h-5 w-5">
+            <div v-for="(option, key) in filteredOptions(poll.message?.options)" :key="key" class="rounded-full flex items-center justify-between px-3 py-2 my-4 text-sm leading-6 hover:bg-gray-100 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
+              {{option.value }}
+              <span v-if="isVoted(poll.msgid)">{{ option.votes }}</span>
+              <input 
+                v-if="!isVoted(poll.msgid)" 
+                type="radio" 
+                :name="poll.msgid" 
+                class="h-5 w-5" 
+                @change="handleVote(poll, key)">
             </div>
           </form>
         </div>
@@ -20,49 +27,44 @@
 </template>
   
 <script lang="ts" setup>
-import {  onMounted } from 'vue'
+import {  onMounted, ref } from 'vue'
 import { useWaku } from '../composables/waku';
+import { Poll } from '../interfaces'
+
+const getVotedPollsFromLocalStorage = () => {
+  const storedVotedPolls = localStorage.getItem('votedPolls');
+  return storedVotedPolls ? JSON.parse(storedVotedPolls) : [];
+};
+const { subscribe, publish, sender, polls } = useWaku();
+const votedPolls = ref(getVotedPollsFromLocalStorage());
+
+const filteredOptions = (options:object) => {
+  return Object.fromEntries(Object.entries(options || {}).filter(([_, value]) => value.value));
+};
+
+const isVoted = (msgid:string) => {
+  return votedPolls.value.includes(msgid);
+};
+
+const handleVote = (poll: {message: Poll, msgid: string}, selectedOption: string) => {
+  // Update the vote count
+  poll.message.options[selectedOption].votes += 1;
+
+  // Publish the updated poll
+  const stringifiedMessage = JSON.stringify(poll.message);
+  publish(sender.value, stringifiedMessage, poll.msgid);
+
+  // Store the msgid in local storage
+  votedPolls.value.push(poll.msgid);
+  localStorage.setItem('votedPolls', JSON.stringify(votedPolls.value));
+};
 
 
+onMounted(() => {
+  subscribe()
+});
 
-    const { subscribe } = useWaku()
 
-      onMounted(() => {
-          subscribe()
-      })
-
-  
-
-      const  polls = [{ 
-          id: "1", 
-            question: "Is this the best poll ever?", 
-            options: ["Yes!", "No way!"], 
-            votes : [{ 
-              userId: "1", 
-              optionIndex: 0
-            }, {
-              userId: "2", 
-              optionIndex: 1
-            }] 
-          },
-          { 
-            id: "2", 
-            question: "What is your favorite color?", 
-            options: ["Red", "Blue", "Green"], 
-            votes: [{ 
-              userId: "1", 
-              optionIndex: 0
-            }, {
-              userId: "2", 
-              optionIndex: 1
-            }]
-          },
-          { 
-            id: "3", 
-            question: "Should we build an AI?", 
-            options: ["Yes, please.", "No thanks."],
-            votes: []
-          }]
 
 
 </script>

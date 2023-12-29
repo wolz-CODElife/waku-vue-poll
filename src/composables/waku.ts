@@ -1,171 +1,152 @@
 import { ref } from 'vue';
-import protobuf from 'protobufjs';
+import protobuf, { Message } from 'protobufjs';
 import {
 	createLightNode,
 	waitForRemotePeer,
 	createDecoder,
 	createEncoder,
-	LightNode,
-	Decoder,
-	Encoder,
-	IFilterSubscription,
-	ILightPush,
-	utf8ToBytes,
+	Protocols,
+	IFilterSubscription
 } from '@waku/sdk';
 import { sha256 } from 'crypto-hash';
-import { useWakuStore } from '../store/wakuStore';
 
-const wakuStore = useWakuStore
-const wakuNode = ref<LightNode>(null as unknown as LightNode);
+
+
 const status = ref<string>('connecting...');
-const contentTopic = ref('/waku-vue-poll/1/polls/proto');
 const sender = ref(localStorage.getItem('senderID') ?? '');
+const polls = ref([]);
 
-const encoder = ref<Encoder>(null as unknown as Encoder);
-const decoder = ref<Decoder>(null as unknown as Decoder);
-const subscription = ref(null as unknown as IFilterSubscription);
-const lightpush = ref(null as unknown as ILightPush);
-const queries = ref<any>(null);
+export const wakuNode = await createLightNode({
+    defaultBootstrap: true,
+})
+export const waitForRemotePeers = async () => {
+    // Wait for a successful peer connection
+    await waitForRemotePeer(wakuNode, [
+        Protocols.LightPush,
+        Protocols.Filter,
+    ]);
+}
+// Choose a content topic
+const contentTopic = '/waku-vue-poll/1/polls/proto';
 
-// Create a message structure using Protobuf with the nested Poll message
-export const ChatMessage = new protobuf.Type('ChatMessage')
+// message encoder and decoder
+export const encoder = createEncoder({ contentTopic, ephemeral: true });
+export const decoder = createDecoder(contentTopic);
+
+// Message structure with Protobuf
+export const PollQuestionWakuMessage = new protobuf.Type('PollQuestion')
 	.add(new protobuf.Field('timestamp', 1, 'uint64'))
-	.add(new protobuf.Field('id', 2, 'string'))
+	.add(new protobuf.Field('msgid', 2, 'string'))
 	.add(new protobuf.Field('sender', 3, 'string'))
 	.add(new protobuf.Field('message', 4, 'string'));
 
-const generateUniqueID = () => {
+export const serializeMessage = (protoMessage: Message) => {
+	return PollQuestionWakuMessage.encode(protoMessage).finish()
+}
+
+export const generateUniqueID = () => {
 	const userAgentHash = sha256(
 		navigator.userAgent + Math.floor(Math.random() * 90000)
 	);
 	return userAgentHash;
 };
 
+export let subscription = {} as IFilterSubscription
+
 export function useWaku() {
 	async function start() {
-		if (wakuNode.value || status.value === 'connected') return;
+		status.value = 'connecting'
+		
 		// perform auth or create an sender identifier for wakuStore user
 		generateUniqueID().then((hashID) => {
 			if (sender.value !== '') return;
 			const newHash =
-				'abcdef012345'[Math.floor(Math.random() * 15)] +
-				'x' +
-				hashID.slice(-20);
+			'abcdef012345'[Math.floor(Math.random() * 15)] +
+			'x' +
+			hashID.slice(-20);
 			sender.value = newHash;
-			wakuStore.sender = newHash;
 			localStorage.setItem('senderID', newHash);
 		});
-
+		
 		try {
-			await createLightNode({ defaultBootstrap: true, pingKeepAlive: 10 }).then(
-				async (node: LightNode) => {
-					if (wakuNode.value) return;
-
-					console.log('LightNode created...');
-					await node.start();
-					try {
-						await waitForRemotePeer(node);
-					} finally {
-						if (!decoder.value)
-							decoder.value = createDecoder(contentTopic.value);
-						if (!encoder.value)
-							encoder.value = createEncoder({
-								contentTopic: contentTopic.value,
-                            });
-                        
-						if (!lightpush.value) lightpush.value = node.lightPush;
-						wakuNode.value = node;
-
-						wakuStore.wakuNode = node;
-						status.value = 'connected';
-						wakuStore.status = 'connected';
-
-						subscription.value = await node.filter.createSubscription();
-						console.log('Found peer...');
-					}
+			await wakuNode.start().then(() => {
+				if (wakuNode.isStarted()) return waitForRemotePeers()
+			}).then(() => {
+				return wakuNode.connectionManager.getPeersByDiscovery()
+			}).then((data) => {
+				if (
+					wakuNode.libp2p.getConnections().length ||
+					data.CONNECTED.bootstrap.length ||
+					data.CONNECTED['peer-exchange'].length
+				) {
+					subscribe()
+					status.value = "connected"
+					console.log("Found peer. . .");
 				}
-			);
-		} catch (error) {
+			})
+		}
+		catch (error) {
 			console.error('Error initializing Waku Light Node:', error);
-			wakuNode.value = null as unknown as LightNode;
-			wakuStore.wakuNode = null as unknown as LightNode;
 			status.value = 'not connected';
 		}
 	}
 
 	async function stop() {
 		unsubscribe();
-		wakuNode.value?.stop();
-		wakuStore.wakuNode = null as unknown as LightNode;
+		wakuNode.stop()
 		status.value = 'not conencted';
-		wakuStore.status = 'not connected';
 		console.log('Disconnected');
 	}
-
 	async function subscribe() {
-		if (!wakuNode.value || status.value !== 'connected') await start();
-
-		if (!decoder.value) decoder.value = createDecoder(contentTopic.value);
-
+		if (!wakuNode || status.value !== 'connected') await start();
 		try {
-			console.log(wakuNode.value);
-			if (!subscription.value)
-				subscription.value = await wakuNode.value.filter.createSubscription();
-			if (wakuNode.value?.filter && subscription.value) {
-				console.log('Subscribing');
-
-				subscription.value.subscribe([decoder.value], (wakuMessage: any) => {
-					console.log(wakuMessage);
-
-					if (!wakuMessage.payload) return;
-					const newMessage = ChatMessage.decode(wakuMessage.payload);
-					console.log('New Messages: ', newMessage);
-				});
-			} else {
-				console.error('WakuNode or WakuNode filter not available.');
-			}
+		  subscription = await wakuNode?.filter?.createSubscription();
+		  await subscription.subscribe([decoder], (wakuMessage) => {
+			const messageObj = PollQuestionWakuMessage.decode(wakuMessage.payload).toJSON();
+			const result = { ...messageObj, message: JSON.parse(messageObj.message ?? '{}') };
+			handleSubscriptionResult(result);
+		  });
 		} catch (error) {
-			console.error('Error subscribing to Content Topic:', error);
+		  console.error('Error subscribing to Content Topic:', error);
 		}
-	}
+	  }
+	  
+	  function handleSubscriptionResult(result) {
+		const msgid = result.msgid;
+		const existingPollIndex = polls.value.findIndex(poll => poll.msgid === msgid);
+	  
+		if (existingPollIndex !== -1) {
+		  // Update the existing poll
+		  polls.value.splice(existingPollIndex, 1, result);
+		} else {
+		  // Add the new poll to the array
+		  polls.value.push(result);
+		}
+	  }
+
 	async function unsubscribe() {
-		if (subscription.value) {
-			subscription.value.unsubscribe([contentTopic.value]);
-			subscription.value = null as unknown as IFilterSubscription;
-		}
+		subscription.unsubscribe([contentTopic])
 	}
 
-	async function publish(sender: string, message: string) {
-		if (!wakuNode.value || status.value !== 'connected') await start();
-
-		if (!encoder.value)
-			encoder.value = createEncoder({
-				contentTopic: contentTopic.value,
-				ephemeral: false,
-			});
-
-		// const timestamp = Date.now();
-		// const msgID = timestamp + Math.floor(Math.random() * 90000).toString();
-
-		// const protoMessage = ChatMessage.create({
-		// 	timestamp: timestamp,
-		// 	id: msgID,
-		// 	sender: sender,
-		// 	message: message,
-		// });
-
-		// const serializedMessage = ChatMessage.encode(protoMessage).finish();
-		console.log(wakuNode.value.lightPush.send);
-		console.log(sender);
+	async function publish(sender: string, message: string, msgid: string = Date.now() + Math.floor(Math.random() * 90000).toString()) {	
+		if (!wakuNode || status.value !== 'connected') await start()
 		
-
 		try {
-			console.log(lightpush.value);
-			await lightpush.value.send(encoder.value, {
-				payload: utf8ToBytes(message),
-				timestamp: new Date(),
-			});
-		} catch (error) {
+			const protoData = PollQuestionWakuMessage.create({
+				timestamp: Date.now(),
+				msgid: msgid,
+				sender: sender,
+				message: message
+			})
+			console.log(protoData);
+			
+			return wakuNode.lightPush.send(encoder, { payload: serializeMessage(protoData) })
+				.then((result) => {
+				console.log(result);
+				
+			})
+		}
+		catch (error) {
 			console.error('Error publishing to Content Topic:', error);
 		}
 	}
@@ -174,7 +155,7 @@ export function useWaku() {
 		wakuNode,
 		status,
 		sender,
-		queries,
+		polls,
 		start,
 		stop,
 		subscribe,

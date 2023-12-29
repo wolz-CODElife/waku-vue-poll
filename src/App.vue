@@ -1,26 +1,24 @@
 <script lang="ts">
 import { defineComponent, onMounted, watchEffect } from 'vue';
 import NavBar from '@/components/NavBar.vue';
-import { useWaku } from './composables/waku';
-import { useWakuStore } from './store/wakuStore';
+import { useWaku, wakuNode } from './composables/waku';
 
 export default defineComponent({
   setup() {
-    const wakuStore = useWakuStore
-    const { start } = useWaku()
+    const waku = useWaku()
 
     // Initialize Waku node when the component is mounted
     onMounted(() => {
-      start()
+      waku.start()
     });
 
     watchEffect(() => {
-      if(!wakuStore.wakuNode || !wakuStore.sender || wakuStore.status !== "connected") start()
+      if(!wakuNode || !waku.sender.value || waku.status.value !== "connected") waku.start()
     })
 
     
     return {
-      wakuStore
+      waku
     };
   },
   components: { NavBar },

@@ -26,9 +26,9 @@
             <router-link v-for="route in routes" :key="route" :to="{ name: route }" :class="`${currentRouteName === route ? 'bg-gray-900 text-white' : 'text-gray-500'} hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium`">{{ route }}</router-link>
           </div>
         </div>
-        <div v-if="wakuStore.wakuNode && wakuStore.sender" class="flex items-center">
+        <div v-if="wakuNode && waku.sender.value" class="flex items-center">
           <div class="relative -z-100 w-max">
-            <button @click="copyToClipboard" type="button" class="hover:bg-gray-200 rounded-md px-3 py-2 text-xs font-bold">{{ wakuStore.sender.slice(0, 7) + '...' + wakuStore.sender.slice(-5) }}</button>
+            <button @click="copyToClipboard" type="button" class="hover:bg-gray-200 rounded-md px-3 py-2 text-xs font-bold">{{ waku.sender.value.slice(0, 7) + '...' + waku.sender.value.slice(-5) }}</button>
 
             <span v-if="copied" class="pointer-events-none absolute -bottom-9 -left-1 w-max z-10 inline-block p-2 text-xs font-medium text-white bg-gray-900 rounded-lg shadow-sm tooltip">
               Copied to clipboard!
@@ -37,7 +37,7 @@
         </div>
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <button v-if="wakuStore.wakuNode" @click="onToggle" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm font-medium flex gap-1">
+            <button v-if="wakuNode" @click="onToggle" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm font-medium flex gap-1">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
                 <path fill="#404040"
                   d="M17.5 21h1v-2.5H21v-1h-2.5V15h-1v2.5H15v1h2.5V21Zm.5 2q-2.075 0-3.538-1.463T13 18q0-2.075 1.463-3.538T18 13q2.075 0 3.538 1.463T23 18q0 2.075-1.463 3.538T18 23ZM7 9h10V7H7v2Zm4.675 12H5q-.825 0-1.413-.588T3 19V5q0-.825.588-1.413T5 3h14q.825 0 1.413.588T21 5v6.7q-.725-.35-1.463-.525T18 11q-.275 0-.513.012t-.487.063V11H7v2h6.125q-.45.425-.813.925T11.675 15H7v2h4.075q-.05.25-.063.488T11 18q0 .825.15 1.538T11.675 21Z" />
@@ -55,7 +55,7 @@
                   <animate attributeName="r" begin="0" calcMode="spline" dur="1.5s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" repeatCount="indefinite" values="0;2;0;0" />
                 </circle>
               </svg>
-              {{ wakuStore.status }}</button>
+              {{ waku.sender.value }}</button>
 
           </div>
         </div>
@@ -96,11 +96,11 @@
           <!-- Options -->
           <label for="option" class="block text-gray-700 text-sm font-bold mb-2">Options</label>
           <div>
-            <p class="flex justify-between items-center gap-2 my-2 text-gray-700 text-sm font-bold"> (A) <input type="text" v-model="poll.options.a" class="border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" /></p>
-            <p class="flex justify-between items-center gap-2 my-2 text-gray-700 text-sm font-bold"> (B) <input type="text" v-model="poll.options.b" class="border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" /></p>
-            <p class="flex justify-between items-center gap-2 my-2 text-gray-700 text-sm font-bold"> (C) <input type="text" v-model="poll.options.c" class="border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" /></p>
-            <p class="flex justify-between items-center gap-2 my-2 text-gray-700 text-sm font-bold"> (D) <input type="text" v-model="poll.options.d" class="border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" /></p>
-            <p class="flex justify-between items-center gap-2 my-2 text-gray-700 text-sm font-bold"> (E) <input type="text" v-model="poll.options.e" class="border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" /></p>
+            <p class="flex justify-between items-center gap-2 my-2 text-gray-700 text-sm font-bold"> (A) <input type="text" v-model="poll.options.a.value" class="border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" /></p>
+            <p class="flex justify-between items-center gap-2 my-2 text-gray-700 text-sm font-bold"> (B) <input type="text" v-model="poll.options.b.value" class="border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" /></p>
+            <p class="flex justify-between items-center gap-2 my-2 text-gray-700 text-sm font-bold"> (C) <input type="text" v-model="poll.options.c.value" class="border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" /></p>
+            <p class="flex justify-between items-center gap-2 my-2 text-gray-700 text-sm font-bold"> (D) <input type="text" v-model="poll.options.d.value" class="border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" /></p>
+            <p class="flex justify-between items-center gap-2 my-2 text-gray-700 text-sm font-bold"> (E) <input type="text" v-model="poll.options.e.value" class="border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" /></p>
           </div>
 
           <div class="mt-4">
@@ -119,9 +119,7 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { Poll } from '../interfaces'
-import { useWaku } from '../composables/waku'
-import { useWakuStore } from '../store/wakuStore'
-
+import { useWaku, wakuNode } from '../composables/waku'
 
 
 const isOpen = ref<boolean>(false)
@@ -131,18 +129,32 @@ const questionLength = ref<string>("100")
 const poll = ref<Poll>({
   question: "",
   options: {
-    a: "",
-    b: "",
-    c: "",
-    d: "",
-    e: ""
+    a: {
+      value: "",
+      votes: 0
+    },
+    b: {
+      value: "",
+      votes: 0
+    },
+    c: {
+      value: "",
+      votes: 0
+    },
+    d: {
+      value: "",
+      votes: 0
+    },
+    e: {
+      value: "",
+      votes: 0
+    }
   }
 })
 const Route = useRoute()
-const wakuStore = useWakuStore
 const { publish } = useWaku()
 const copied = ref<boolean>(false)
-
+const waku = useWaku()
 
 
 
@@ -150,42 +162,12 @@ const onToggle = () => {
   isModalOpen.value = !isModalOpen.value;
 }
 const copyToClipboard = () => {
-  const textToCopy = wakuStore.sender;
+  const textToCopy = waku.sender.value;
 
   // Create a textarea element to hold the text
   const textarea = document.createElement('textarea');
   textarea.value = textToCopy;
   document.body.appendChild(textarea);
-
-  // const copyToClipboard = () => {
-  //   const textToCopy = wakuStore.sender
-  //   const textarea = document.createElement('textarea')
-  //   textarea.value = textToCopy
-  //   document.body.appendChild(textarea)
-  //   textarea.select()
-  //   document.execCommand('copy')
-  //   document.body.removeChild(textarea)
-  //   copied.value = true
-  //   setTimeout(() => {
-  //     copied.value = false
-  //   }, 1000)
-  // }
-
-  // const sendMessage = ()=> {
-  //  const stringifiedMessage = JSON.stringify(poll.value)
-  //  console.log(stringifiedMessage)
-  //  wakuStore.publish(wakuStore.sender, stringifiedMessage)
-  //  poll.value = {
-  //    question: "",
-  //    options: {
-  //      a: "",
-  //      b: "",
-  //      c: "",
-  //      d: "",
-  //      e: ""
-  //    }
-  //  }
-  // }
 
   // Optionally, provide user feedback (e.g., a toast or alert)
   copied.value = true
@@ -199,19 +181,35 @@ const sendMessage = () => {
   console.log(stringifiedMessage);
 
   // send a message
-  publish(wakuStore.sender, stringifiedMessage)
+  publish(waku.sender.value, stringifiedMessage)
 
   // reset question state
   poll.value = {
     question: "",
     options: {
-      a: "",
-      b: "",
-      c: "",
-      d: "",
-      e: ""
+      a: {
+        value: "",
+        votes: 0
+      },
+      b: {
+        value: "",
+        votes: 0
+      },
+      c: {
+        value: "",
+        votes: 0
+      },
+      d: {
+        value: "",
+        votes: 0
+      },
+      e: {
+        value: "",
+        votes: 0
+      }
     }
   }
+  onToggle()
 }
 
 

@@ -1,5 +1,6 @@
 import Web3 from 'web3';
 import { useWaku } from './waku';
+import { sha256 } from 'crypto-hash';
 
 declare global {
     interface Window {
@@ -9,6 +10,12 @@ declare global {
 }
 
 const waku = useWaku()
+export const generateUniqueID = () => {
+    const userAgentHash = sha256(navigator.userAgent + Math.floor(Math.random() * 90000));
+  return userAgentHash;
+};
+
+
 export function useWalletConnect() {
     async function connectWallet() {
         if (window.ethereum) {
@@ -21,11 +28,17 @@ export function useWalletConnect() {
     
             // Get the current MetaMask selected/active wallet
             const walletAddress = accounts[0];
-            console.log(walletAddress);
-    
-            // Update waku sender and local storage
-            waku.sender.value = walletAddress;
-            localStorage.setItem('senderWalletAddress', walletAddress);
+            if (walletAddress) {
+                waku.sender.value = walletAddress;
+                // Update waku sender and local storage
+                localStorage.setItem('senderWalletAddress', walletAddress);
+            } else {
+                generateUniqueID().then((hashID) => {
+                    const newHash = 'abcdef012345'[Math.floor(Math.random() * 15)] + "x" + hashID.slice(-20)
+                    waku.sender.value = newHash
+                    localStorage.setItem('senderWalletAddress', newHash);
+                });
+            }
     
             // Start Waku
             await waku.start();

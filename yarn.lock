@@ -2507,6 +2507,11 @@
     "randombytes" "^2.0.0"
     "randomfill" "^1.0.3"
 
+"crypto-hash@^3.0.0":
+  "integrity" "sha512-5l5xGtzuvGTU28GXxGV1JYVFou68buZWpkV1Fx5hIDRPnfbQ8KzabTlNIuDIeSCYGVPFehupzDqlnbXm2IXmdQ=="
+  "resolved" "https://registry.npmjs.org/crypto-hash/-/crypto-hash-3.0.0.tgz"
+  "version" "3.0.0"
+
 "cssesc@^3.0.0":
   "integrity" "sha512-/Tb/JcjK111nNScGob5MNtsntNM1aCNUDipB/TkwZFhyDrrE47SOx/18wF2bbjgc3ZzCSKW1T5nt5EbFoAz/Vg=="
   "resolved" "https://registry.npmjs.org/cssesc/-/cssesc-3.0.0.tgz"

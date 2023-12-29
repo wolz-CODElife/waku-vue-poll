@@ -97,7 +97,7 @@ const formatDate = (timestamp: string) => {
 };
 
 onMounted(() => {
-  if (waku.wakuNode.isStarted() && waku.sender) {
+  if (waku.wakuNode && waku.wakuNode.isStarted() && waku.sender.value !== '') {
     waku.subscribe()
   }
 });

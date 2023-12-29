@@ -5,18 +5,22 @@ import { useWaku } from './composables/waku';
 
 export default defineComponent({
   setup() {
-    const waku = useWaku()
+    const waku = useWaku();
 
     // Initialize Waku node when the component is mounted
     onMounted(() => {
-      if (!waku.wakuNode.isStarted() && waku.sender.value !== '') {
-        waku.start()
+      if (waku.wakuNode && !waku.wakuNode.isStarted() && waku.sender.value !== '') {
+        waku.start();
       }
     });
 
     watchEffect(() => {
-      if((!waku.wakuNode ||  waku.status.value !== "connected") && waku.sender.value !== '') waku.start()
-    })
+      if (!waku.wakuNode || waku.status.value !== 'connected') {
+        if (waku.sender.value !== '') {
+          waku.start();
+        }
+      }
+    });
 
     return {
       waku
@@ -25,6 +29,7 @@ export default defineComponent({
   components: { NavBar },
 });
 </script>
+
 
 <template>
   <div class="flex flex-col h-screen justify-between">

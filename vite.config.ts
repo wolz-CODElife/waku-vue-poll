@@ -13,4 +13,9 @@ export default defineConfig({
   optimizeDeps: {
     include: ['node-polyfill-webpack-plugin'],
   },
+  esbuild: {
+    supported: {
+      'top-level-await': true
+    }
+  }
 });

@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, onMounted, watchEffect } from 'vue';
 import NavBar from '@/components/NavBar.vue';
-import { useWaku, wakuNode } from './composables/waku';
+import { useWaku } from './composables/waku';
 
 export default defineComponent({
   setup() {
@@ -9,14 +9,15 @@ export default defineComponent({
 
     // Initialize Waku node when the component is mounted
     onMounted(() => {
-      waku.start()
+      if (!waku.wakuNode.isStarted() && waku.sender.value !== '') {
+        waku.start()
+      }
     });
 
     watchEffect(() => {
-      if(!wakuNode || !waku.sender.value || waku.status.value !== "connected") waku.start()
+      if((!waku.wakuNode ||  waku.status.value !== "connected") && waku.sender.value !== '') waku.start()
     })
 
-    
     return {
       waku
     };

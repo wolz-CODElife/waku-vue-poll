@@ -1,10 +1,11 @@
 <template>
   <div class="text-center flex flex-col items-center">
     <h1 class="text-3xl">Vote Public Polls 🗳️</h1>
-    <p class="mb-4 font-bold">Polls ({{ polls.length }})</p>
+    <p class="text-gray-600 text-sm"><span class="text-red-400">NOTE:</span> Polls are not stored. <br> They will be lost once you refresh the page. Create a new poll to continue participating.</p>
+    <p class="mb-4 font-bold">Polls ({{ waku.polls.value.length }})</p>
     <div class="w-full max-w-lg p-10 h-[calc(100vh-300px)] md:h-[calc(100vh-196px)] overflow-y-auto mx-auto my-auto text-center rounded-xl shadow-lg bg-white" >
       <!-- Blackbox Create a list of polls -->
-      <div class="w-full text-start" v-if="polls.length" v-for="poll in polls" :key="poll.msgid">
+      <div class="w-full text-start" v-if="waku.polls.value.length" v-for="poll in waku.polls.value" :key="poll.msgid">
         <div class="">
           <p class="font-semibold">Question : {{ poll.message?.question }}</p>
           <form>
@@ -16,7 +17,7 @@
                 type="radio" 
                 :name="poll.msgid" 
                 class="h-5 w-5" 
-                @change="handleVote(poll, key)">
+                @change="handleVote(poll.msgid, key)">
             </div>
           </form>
         </div>
@@ -27,15 +28,14 @@
 </template>
   
 <script lang="ts" setup>
-import {  onMounted, ref } from 'vue'
+import {  onMounted, ref, reactive } from 'vue';
 import { useWaku } from '../composables/waku';
-import { Poll } from '../interfaces'
 
 const getVotedPollsFromLocalStorage = () => {
   const storedVotedPolls = localStorage.getItem('votedPolls');
   return storedVotedPolls ? JSON.parse(storedVotedPolls) : [];
 };
-const { subscribe, publish, sender, polls } = useWaku();
+const waku = useWaku();
 const votedPolls = ref(getVotedPollsFromLocalStorage());
 
 const filteredOptions = (options:object) => {
@@ -46,22 +46,43 @@ const isVoted = (msgid:string) => {
   return votedPolls.value.includes(msgid);
 };
 
-const handleVote = (poll: {message: Poll, msgid: string}, selectedOption: string) => {
-  // Update the vote count
-  poll.message.options[selectedOption].votes += 1;
 
-  // Publish the updated poll
-  const stringifiedMessage = JSON.stringify(poll.message);
-  publish(sender.value, stringifiedMessage, poll.msgid);
+const handleVote = async (msgid: string, selectedOption: string) => {
+  try {
+    // Wait for the subscribe operation to complete
+    await waku.subscribe();
 
-  // Store the msgid in local storage
-  votedPolls.value.push(poll.msgid);
-  localStorage.setItem('votedPolls', JSON.stringify(votedPolls.value));
+    // Find the selected poll in the polls array
+    let selectedPollIndex = waku.polls.value.findIndex((poll) => poll.msgid === msgid);
+
+    if (selectedPollIndex !== -1) {
+      // Update the vote count before publishing
+      waku.polls.value[selectedPollIndex].message.options[selectedOption].votes += 1;
+
+      // Create a reactive copy to trigger reactivity
+      const reactiveCopy = reactive({ ...waku.polls.value[selectedPollIndex].message });
+
+      // Publish the updated poll
+      const stringifiedMessage = JSON.stringify(reactiveCopy);
+      await waku.publish(waku.sender.value, stringifiedMessage, msgid);
+
+      // Store the msgid in local storage
+      votedPolls.value.push(msgid);
+      localStorage.setItem('votedPolls', JSON.stringify(votedPolls.value));
+    }
+  } catch (error) {
+    console.error('Error in handleVote:', error);
+  }
 };
 
 
+
+
+
 onMounted(() => {
-  subscribe()
+  if (waku.wakuNode.isStarted() && waku.sender) {
+    waku.subscribe()
+  }
 });
 
 

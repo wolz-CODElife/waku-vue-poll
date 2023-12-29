@@ -26,7 +26,7 @@
             <router-link v-for="route in routes" :key="route" :to="{ name: route }" :class="`${currentRouteName === route ? 'bg-gray-900 text-white' : 'text-gray-500'} hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium`">{{ route }}</router-link>
           </div>
         </div>
-        <div v-if="wakuNode && waku.sender.value" class="flex items-center">
+        <div v-if="waku.wakuNode && waku.sender.value" class="flex items-center gap-2">
           <div class="relative -z-100 w-max">
             <button @click="copyToClipboard" type="button" class="hover:bg-gray-200 rounded-md px-3 py-2 text-xs font-bold">{{ waku.sender.value.slice(0, 7) + '...' + waku.sender.value.slice(-5) }}</button>
 
@@ -34,28 +34,35 @@
               Copied to clipboard!
             </span>
           </div>
+          <button @click="disconnectWallet" title="Disconnect Wallet" class="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><path fill="#404040" d="M12 18.5c0 .5.07 1 .18 1.5H6.5c-1.5 0-2.81-.5-3.89-1.57C1.54 17.38 1 16.09 1 14.58c0-1.3.39-2.46 1.17-3.48S4 9.43 5.25 9.15c.42-1.53 1.25-2.77 2.5-3.72S10.42 4 12 4c1.95 0 3.6.68 4.96 2.04C18.32 7.4 19 9.05 19 11c1.15.13 2.1.63 2.86 1.5c.24.26.43.55.6.86A6.37 6.37 0 0 0 18.5 12a6.5 6.5 0 0 0-6.5 6.5m11 0c0 2.5-2 4.5-4.5 4.5S14 21 14 18.5s2-4.5 4.5-4.5s4.5 2 4.5 4.5m-3 2.58L15.92 17c-.27.42-.42.94-.42 1.5c0 1.66 1.34 3 3 3c.56 0 1.08-.15 1.5-.42m1.5-2.58c0-1.66-1.34-3-3-3c-.56 0-1.08.15-1.5.42L21.08 20c.27-.42.42-.94.42-1.5"/></svg>
+          </button>
+        </div>
+        <div v-else class="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
+            <circle cx="18" cy="12" r="0" fill="#404040">
+              <animate attributeName="r" begin=".67" calcMode="spline" dur="1.5s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" repeatCount="indefinite" values="0;2;0;0" />
+            </circle>
+            <circle cx="12" cy="12" r="0" fill="#404040">
+              <animate attributeName="r" begin=".33" calcMode="spline" dur="1.5s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" repeatCount="indefinite" values="0;2;0;0" />
+            </circle>
+            <circle cx="6" cy="12" r="0" fill="#404040">
+              <animate attributeName="r" begin="0" calcMode="spline" dur="1.5s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" repeatCount="indefinite" values="0;2;0;0" />
+            </circle>
+          </svg>
         </div>
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <button v-if="wakuNode" @click="onToggle" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm font-medium flex gap-1">
+            <button v-if="waku.wakuNode.isStarted() && waku.sender.value !==''" @click="onToggle" class="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md text-sm font-medium flex gap-1">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
                 <path fill="#404040"
                   d="M17.5 21h1v-2.5H21v-1h-2.5V15h-1v2.5H15v1h2.5V21Zm.5 2q-2.075 0-3.538-1.463T13 18q0-2.075 1.463-3.538T18 13q2.075 0 3.538 1.463T23 18q0 2.075-1.463 3.538T18 23ZM7 9h10V7H7v2Zm4.675 12H5q-.825 0-1.413-.588T3 19V5q0-.825.588-1.413T5 3h14q.825 0 1.413.588T21 5v6.7q-.725-.35-1.463-.525T18 11q-.275 0-.513.012t-.487.063V11H7v2h6.125q-.45.425-.813.925T11.675 15H7v2h4.075q-.05.25-.063.488T11 18q0 .825.15 1.538T11.675 21Z" />
               </svg>
-              Create Poll</button>
-            <button v-else class="bg-gray-200 cursor-default px-3 py-2 rounded-md text-sm font-medium flex gap-1">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
-                <circle cx="18" cy="12" r="0" fill="#404040">
-                  <animate attributeName="r" begin=".67" calcMode="spline" dur="1.5s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" repeatCount="indefinite" values="0;2;0;0" />
-                </circle>
-                <circle cx="12" cy="12" r="0" fill="#888888">
-                  <animate attributeName="r" begin=".33" calcMode="spline" dur="1.5s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" repeatCount="indefinite" values="0;2;0;0" />
-                </circle>
-                <circle cx="6" cy="12" r="0" fill="#888888">
-                  <animate attributeName="r" begin="0" calcMode="spline" dur="1.5s" keySplines="0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8;0.2 0.2 0.4 0.8" repeatCount="indefinite" values="0;2;0;0" />
-                </circle>
-              </svg>
-              {{ waku.sender.value }}</button>
+              Create Poll </button>
+            <button v-else @click="connectWallet" class="bg-gray-200 cursor-pointer px-3 py-2 rounded-md text-sm font-medium flex gap-1"> 
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"><g fill="#404040" fill-rule="evenodd" clip-rule="evenodd"><path d="M21.1 8.004C21.045 8 20.984 8 20.92 8h-2.525c-2.068 0-3.837 1.628-3.837 3.75s1.77 3.75 3.837 3.75h2.525c.064 0 .125 0 .182-.004a1.755 1.755 0 0 0 1.645-1.628c.004-.06.004-.125.004-.185V9.817c0-.06 0-.125-.004-.185a1.755 1.755 0 0 0-1.645-1.628m-2.928 4.746c.532 0 .963-.448.963-1s-.431-1-.963-1c-.533 0-.964.448-.964 1s.431 1 .964 1"/><path d="M20.918 17a.22.22 0 0 1 .221.278c-.2.712-.519 1.32-1.03 1.83c-.749.75-1.698 1.081-2.87 1.239c-1.14.153-2.595.153-4.433.153h-2.112c-1.838 0-3.294 0-4.433-.153c-1.172-.158-2.121-.49-2.87-1.238c-.748-.749-1.08-1.698-1.238-2.87C2 15.099 2 13.644 2 11.806v-.112C2 9.856 2 8.4 2.153 7.26c.158-1.172.49-2.121 1.238-2.87c.749-.748 1.698-1.08 2.87-1.238C7.401 3 8.856 3 10.694 3h2.112c1.838 0 3.294 0 4.433.153c1.172.158 2.121.49 2.87 1.238c.511.512.83 1.119 1.03 1.831a.22.22 0 0 1-.221.278h-2.524c-2.837 0-5.337 2.24-5.337 5.25s2.5 5.25 5.337 5.25zM5.75 7a.75.75 0 0 0 0 1.5h4a.75.75 0 0 0 0-1.5z"/></g></svg>
+              Connect Wallet
+            </button>
 
           </div>
         </div>
@@ -119,7 +126,8 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { Poll } from '../interfaces'
-import { useWaku, wakuNode } from '../composables/waku'
+import { useWaku } from '../composables/waku'
+import {useWalletConnect} from '../composables/client'
 
 
 const isOpen = ref<boolean>(false)
@@ -152,9 +160,9 @@ const poll = ref<Poll>({
   }
 })
 const Route = useRoute()
-const { publish } = useWaku()
 const copied = ref<boolean>(false)
 const waku = useWaku()
+const {connectWallet, disconnectWallet} = useWalletConnect()
 
 
 
@@ -178,10 +186,9 @@ const copyToClipboard = () => {
 }
 const sendMessage = () => {
   const stringifiedMessage = JSON.stringify(poll.value)
-  console.log(stringifiedMessage);
 
   // send a message
-  publish(waku.sender.value, stringifiedMessage)
+  waku.publish(waku.sender.value, stringifiedMessage)
 
   // reset question state
   poll.value = {

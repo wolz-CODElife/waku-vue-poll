@@ -6,7 +6,7 @@ import {
 	createDecoder,
 	createEncoder,
 	Protocols,
-	IFilterSubscription
+	IFilterSubscription,
 } from '@waku/sdk';
 
 interface PollOption {
@@ -27,42 +27,43 @@ interface Poll {
 	// other properties...
 }
   
-
-const status = ref<string>('connecting...');
-const sender = ref(localStorage.getItem('senderWalletAddress') ?? '');
-const polls = ref<Poll[]>([]);
-
-export const wakuNode = await createLightNode({
-    defaultBootstrap: true,
-})
-export const waitForRemotePeers = async () => {
-    // Wait for a successful peer connection
-    await waitForRemotePeer(wakuNode, [
-        Protocols.LightPush,
-        Protocols.Filter,
-    ]);
-}
-// Choose a content topic
-const contentTopic = '/waku-vue-poll/1/polls/proto';
-
-// message encoder and decoder
-export const encoder = createEncoder({ contentTopic, ephemeral: true });
-export const decoder = createDecoder(contentTopic);
-
-// Message structure with Protobuf
-export const PollQuestionWakuMessage = new protobuf.Type('PollQuestion')
-	.add(new protobuf.Field('timestamp', 1, 'string'))
-	.add(new protobuf.Field('msgid', 2, 'string'))
-	.add(new protobuf.Field('sender', 3, 'string'))
-	.add(new protobuf.Field('message', 4, 'string'));
-
-export const serializeMessage = (protoMessage: Message) => {
-	return PollQuestionWakuMessage.encode(protoMessage).finish()
-}
-
-export let subscription = {} as IFilterSubscription
-
 export function useWaku() {
+	const status = ref<string>('connecting...');
+	const sender = ref(localStorage.getItem('senderWalletAddress') ?? '');
+	const polls = ref<Poll[]>([]);
+
+	
+	let wakuNode: any;
+	(async () => {
+		wakuNode = await createLightNode({
+			defaultBootstrap: true,
+		  });
+	})();
+	const waitForRemotePeers = async () => {
+		// Wait for a successful peer connection
+		await waitForRemotePeer(wakuNode, [
+			Protocols.LightPush,
+			Protocols.Filter,
+		]);
+	}
+	// Choose a content topic
+	const contentTopic = '/waku-vue-poll/1/polls/proto';
+
+	// message encoder and decoder
+	const encoder = createEncoder({ contentTopic, ephemeral: true });
+	const decoder = createDecoder(contentTopic);
+
+	// Message structure with Protobuf
+	const PollQuestionWakuMessage = new protobuf.Type('PollQuestion')
+		.add(new protobuf.Field('timestamp', 1, 'string'))
+		.add(new protobuf.Field('msgid', 2, 'string'))
+		.add(new protobuf.Field('sender', 3, 'string'))
+		.add(new protobuf.Field('message', 4, 'string'));
+
+	const serializeMessage = (protoMessage: Message) => {
+		return PollQuestionWakuMessage.encode(protoMessage).finish()
+	}
+
 	async function start() {
 		status.value = 'connecting'		
 		try {
@@ -70,7 +71,7 @@ export function useWaku() {
 				if (wakuNode.isStarted()) return waitForRemotePeers()
 			}).then(() => {
 				return wakuNode.connectionManager.getPeersByDiscovery()
-			}).then((data) => {
+			}).then((data:any) => {
 				if (
 					wakuNode.libp2p.getConnections().length ||
 					data.CONNECTED.bootstrap.length ||
@@ -92,6 +93,8 @@ export function useWaku() {
 		wakuNode.stop()
 		status.value = 'not conencted';
 	}
+	let subscription = {} as IFilterSubscription
+
 	async function subscribe() {
 		if (!wakuNode || status.value !== 'connected') await start();
 		try {

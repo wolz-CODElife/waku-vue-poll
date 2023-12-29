@@ -13,8 +13,8 @@
             <div v-for="(option, key) in filteredOptions(poll.message?.options)" :key="key" class="rounded-full flex items-center justify-between px-3 py-2 my-4 text-sm leading-6 hover:bg-gray-100 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
               {{option.value }}
               <span v-if="isVoted(poll.msgid)">{{ option.votes }}</span>
-              <input 
-                v-if="!isVoted(poll.msgid)" 
+              <input
+                v-if="!isVoted(poll.msgid) && !loading" 
                 type="radio" 
                 :name="poll.msgid" 
                 class="h-5 w-5" 
@@ -38,6 +38,7 @@ const getVotedPollsFromLocalStorage = () => {
 };
 const waku = useWaku();
 const votedPolls = ref(getVotedPollsFromLocalStorage());
+const loading = ref<boolean>(false)
 
 const filteredOptions = (options:object) => {
   return Object.fromEntries(Object.entries(options || {}).filter(([_, value]) => value.value));
@@ -49,6 +50,7 @@ const isVoted = (msgid:string) => {
 
 
 const handleVote = async (msgid: string, selectedOption: string | number) => {
+  loading.value = true
   try {
     // Wait for the subscribe operation to complete
     await waku.subscribe();
@@ -71,6 +73,7 @@ const handleVote = async (msgid: string, selectedOption: string | number) => {
       votedPolls.value.push(msgid);
       localStorage.setItem('votedPolls', JSON.stringify(votedPolls.value));
     }
+    loading.value = false
   } catch (error) {
     console.error('Error in handleVote:', error);
   }

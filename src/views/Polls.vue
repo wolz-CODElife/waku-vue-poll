@@ -8,6 +8,7 @@
       <div class="w-full text-start" v-if="waku.polls.value.length" v-for="poll in waku.polls.value" :key="poll.msgid">
         <div class="">
           <p class="font-semibold">Question : {{ poll.message?.question }}</p>
+          <p class="text-sm text-gray-500 italic"> {{ formatDate(poll.timestamp) }}</p>
           <form>
             <div v-for="(option, key) in filteredOptions(poll.message?.options)" :key="key" class="rounded-full flex items-center justify-between px-3 py-2 my-4 text-sm leading-6 hover:bg-gray-100 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
               {{option.value }}
@@ -47,7 +48,7 @@ const isVoted = (msgid:string) => {
 };
 
 
-const handleVote = async (msgid: string, selectedOption: string) => {
+const handleVote = async (msgid: string, selectedOption: string | number) => {
   try {
     // Wait for the subscribe operation to complete
     await waku.subscribe();
@@ -75,9 +76,22 @@ const handleVote = async (msgid: string, selectedOption: string) => {
   }
 };
 
+const formatDate = (timestamp: string) => {
+  const date = new Date(timestamp);
 
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true,
+  };
 
-
+  const formattedDate = date.toLocaleString('en-US', options);
+  return formattedDate;
+};
 
 onMounted(() => {
   if (waku.wakuNode.isStarted() && waku.sender) {

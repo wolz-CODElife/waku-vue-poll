@@ -9,11 +9,28 @@ import {
 	IFilterSubscription
 } from '@waku/sdk';
 
+interface PollOption {
+	value: string;
+	votes: number;
+}
 
+interface PollMessage {
+	question: string;
+	options: { [key: string]: PollOption };
+}
+
+interface Poll {
+	msgid: string;
+	timestamp: string;
+	sender: string;
+	message: PollMessage;
+	// other properties...
+}
+  
 
 const status = ref<string>('connecting...');
 const sender = ref(localStorage.getItem('senderWalletAddress') ?? '');
-const polls = ref([]);
+const polls = ref<Poll[]>([]);
 
 export const wakuNode = await createLightNode({
     defaultBootstrap: true,
@@ -34,7 +51,7 @@ export const decoder = createDecoder(contentTopic);
 
 // Message structure with Protobuf
 export const PollQuestionWakuMessage = new protobuf.Type('PollQuestion')
-	.add(new protobuf.Field('timestamp', 1, 'uint64'))
+	.add(new protobuf.Field('timestamp', 1, 'string'))
 	.add(new protobuf.Field('msgid', 2, 'string'))
 	.add(new protobuf.Field('sender', 3, 'string'))
 	.add(new protobuf.Field('message', 4, 'string'));
@@ -81,7 +98,12 @@ export function useWaku() {
 		  subscription = await wakuNode?.filter?.createSubscription();
 		  await subscription.subscribe([decoder], (wakuMessage) => {
 			const messageObj = PollQuestionWakuMessage.decode(wakuMessage.payload).toJSON();
-			const result = { ...messageObj, message: JSON.parse(messageObj.message ?? '{}') };
+			const result: Poll = {
+				timestamp: messageObj.timestamp,
+				msgid: messageObj.msgid,
+				sender: messageObj.sender,
+				message: JSON.parse(messageObj.message ?? '{}')
+			};
 			handleSubscriptionResult(result);
 		  });
 		} catch (error) {
@@ -89,7 +111,7 @@ export function useWaku() {
 		}
 	  }
 	  
-	  function handleSubscriptionResult(result) {
+	  function handleSubscriptionResult(result:Poll) {
 		const msgid = result.msgid;
 		const existingPollIndex = polls.value.findIndex(poll => poll.msgid === msgid);
 	  
@@ -108,10 +130,11 @@ export function useWaku() {
 
 	async function publish(sender: string, message: string, msgid: string = Date.now() + Math.floor(Math.random() * 90000).toString()) {	
 		if (!wakuNode || status.value !== 'connected') await start()
+		const timestamp = new Date().toUTCString()
 		
 		try {
 			const protoData = PollQuestionWakuMessage.create({
-				timestamp: Date.now(),
+				timestamp: timestamp,
 				msgid: msgid,
 				sender: sender,
 				message: message

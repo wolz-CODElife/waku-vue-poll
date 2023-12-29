@@ -1,6 +1,12 @@
 import Web3 from 'web3';
 import { useWaku } from './waku';
 
+declare global {
+    interface Window {
+        ethereum: any;
+        web3: any
+    }
+}
 
 const waku = useWaku()
 export function useWalletConnect() {

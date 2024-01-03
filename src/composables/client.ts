@@ -15,7 +15,6 @@ export const generateUniqueID = () => {
   return userAgentHash;
 };
 
-
 export function useWalletConnect() {
     async function connectWallet() {
         if (window.ethereum) {
@@ -50,7 +49,6 @@ export function useWalletConnect() {
         }
   }
   
-    
     async function disconnectWallet() {
         localStorage.removeItem('senderWalletAddress');
         // stop waku's light node
@@ -59,7 +57,6 @@ export function useWalletConnect() {
         waku.sender.value = ""
         waku.status.value = "connecting..."
     }
-    
 
     return {
         connectWallet,

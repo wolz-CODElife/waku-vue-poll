@@ -33,7 +33,6 @@ export default defineComponent({
 
 <template>
   <div class="flex flex-col h-screen justify-between">
-    <!-- Conditionally render NavBar when wakunode is defined -->
     <NavBar />
     <router-view class="container max-w-8xl mx-auto mb-auto px-4" />
   </div>

@@ -28,7 +28,6 @@ interface Poll {
 }
 
 
-
 export const status = ref<string>('connecting...');
 export const sender = ref(localStorage.getItem('senderWalletAddress') ?? '');
 export const polls = ref<Poll[]>([]);
@@ -44,6 +43,7 @@ export const waitForRemotePeers = async () => {
 		Protocols.Filter,
 	]);
 }
+
 // Choose a content topic
 export const contentTopic = '/waku-vue-poll/1/polls/proto';
 
@@ -61,7 +61,6 @@ export const PollQuestionWakuMessage = new protobuf.Type('PollQuestion')
 export const serializeMessage = (protoMessage: Message) => {
 	return PollQuestionWakuMessage.encode(protoMessage).finish()
 }
-
 
 export function useWaku() {
 

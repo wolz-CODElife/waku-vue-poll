@@ -5,9 +5,9 @@ Welcome to the Vue 3 + TypeScript + Vite starter template! This template provide
 ## Getting Started
 
 ### 1. Clone the Project
-
+Before cloning this project, fork the repository first then run the following command:
 ```bash
-git clone https://github.com/your-username/your-vue-app.git
+git clone https://github.com/your-username/waku-vue-poll.git
 cd your-vue-app
 ```
 

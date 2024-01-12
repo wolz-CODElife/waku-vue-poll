@@ -7,7 +7,6 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Home',
     component: Home,
   },
-
   {
     path: '/polls',
     name: 'Polls',

@@ -200,7 +200,14 @@ The application runs on two fundamental logic, which are the wallet connect and 
 ```ts
 import { ref } from 'vue';
 import protobuf, { Message } from 'protobufjs';
-import { createLightNode, waitForRemotePeer, createDecoder, createEncoder, Protocols, IFilterSubscription } from '@waku/sdk';
+import {
+	createLightNode,
+	waitForRemotePeer,
+	createDecoder,
+	createEncoder,
+	Protocols,
+	IFilterSubscription,
+} from '@waku/sdk';
 
 interface PollOption {
 	value: string;
@@ -223,7 +230,8 @@ interface Poll {
 
 export const status = ref<string>('connecting...');
 export const sender = ref(localStorage.getItem('senderWalletAddress') ?? '');
-export const polls = ref<Poll[]>([]);
+export const polls = ref<Poll[]>(JSON.parse(localStorage.getItem('polls') ?? '[]'));
+
 
 export const wakuNode = await createLightNode({
 	defaultBootstrap: true,
@@ -318,15 +326,18 @@ export function useWaku() {
 		  // Add the new poll to the array
 		  polls.value.unshift(result);
 		}
+		  
+		if (polls.value.length > 0) {
+			localStorage.setItem('polls', JSON.stringify(polls.value));
+		}
 	  }
 
 	async function unsubscribe() {
 		subscription.unsubscribe([contentTopic])
 	}
 
-	async function publish(sender: string, message: string, msgid: string = Date.now() + Math.floor(Math.random() * 90000).toString()) {	
+	async function publish(sender: string, message: string, timestamp: string = new Date().toUTCString(), msgid: string = Date.now() + Math.floor(Math.random() * 90000).toString()) {	
 		if (!wakuNode || status.value !== 'connected') await start()
-		const timestamp = new Date().toUTCString()
 		
 		try {
 			const protoData = PollQuestionWakuMessage.create({
@@ -471,22 +482,39 @@ export function useWalletConnect() {
         } else {
         console.log('No wallet');
         }
-  }
+    }
   
     async function disconnectWallet() {
         localStorage.removeItem('senderWalletAddress');
+        localStorage.removeItem('polls');
         // stop waku's light node
         await waku.wakuNode.stop();
         waku.stop()
         waku.sender.value = ""
         waku.status.value = "connecting..."
+        waku.polls.value = []
+    }
+    async function signMessage(msgid: string, stringifiedMessage:string) {
+        const messageToSign = `Message ID: ${msgid}, Content: ${stringifiedMessage}`;
+        let signature;
+        try {
+            signature = await window.ethereum.request({
+                method: 'personal_sign',
+                params: [messageToSign, waku.sender.value],
+            });
+            return signature
+        } catch (signError) {
+            console.error('Error signing the message:', signError);
+            return;
+        }
     }
 
     return {
         connectWallet,
-        disconnectWallet
+        disconnectWallet,
+        signMessage
 	};
-}
+}  
 ```
 
 The above code enables users to connect their crypto wallet to the app as a means of identification. In this scenario, we used the wallet address as the sender of the poll.
@@ -495,7 +523,9 @@ However, some users may not have wallets and we don’t want to limit the applic
   
 We also created a `disconnectWallet()` function to remove the wallet address from localStorage and stop the WakuNode running.
 
-The `useWalletConnect` composable encapsulates and returns the `connectWallet` and `disconnectWallet` functions so that they are accessible across the application.
+To claim ownership of the polls, users have to sign each poll message using their wallet, for this the `signMessage` function is executed.
+
+The `useWalletConnect` composable encapsulates and returns the `connectWallet`, `disconnectWallet` and `signMessage` functions so that they are accessible across the application.
 
 ### Building the UI Components
 Now that we have our logic, we can build the UI to utilize the data and methods in our composables.
@@ -528,27 +558,38 @@ This `ref` is updated by the modal form, and on submit, we trigger the `sendMess
 ```ts
 const sendMessage = () => {
   const stringifiedMessage = JSON.stringify(poll.value)
+  const msgid = Date.now() + Math.floor(Math.random() * 90000).toString();
+  const timestamp = new Date().toUTCString()
 
-  // send a message
-  waku.publish(waku.sender.value, stringifiedMessage)
+  // sign message
+  signMessage(msgid, stringifiedMessage).then((signature) => {
+    // send a message
+    waku.publish(signature, stringifiedMessage, timestamp, msgid)
 
-  // reset question state
-  poll.value = {
-    question: "",
-    options: {
-      a: { value: "", votes: 0},
-      b: { value: "", votes: 0},
-      c: { value: "", votes: 0},
-      d: { value: "", votes: 0},
-      e: { value: "", votes: 0}
+    // reset question state
+    poll.value = {
+      question: "",
+      options: {
+        a: { value: "", votes: 0},
+        b: { value: "", votes: 0},
+        c: { value: "", votes: 0},
+        d: { value: "", votes: 0},
+        e: { value: "", votes: 0}
+      }
     }
-  }
-  }
-  onToggle()
+    }
+    onToggle()
+    // redirect user to where the new poll is populated
+    if (router.currentRoute.value.path !== "/polls") {
+      router.push("/polls")
+    }
+  }).catch((error) => {
+    console.error("Error sending message", error);
+  })
 }
 ```
 
-In the above code, we stringify the poll data which includes the question, and options so that we can publish the poll as a message to Waku. Then we call the `waku.publish(waku.sender.value, stringifiedMessage)` function.
+In the above code, we stringify the poll data which includes the question, and options so that we can publish the poll as a message to Waku. Then we create a `msgid` and `timestamp` for the message, before using the user's wallet to sign the message. Once the message is signed, we call the `waku.publish(waku.sender.value, stringifiedMessage)` function to register the update for other users subscribing to the Content Topic.
 
 ### Real-Time Voting and Result Polling
 In the “Poll.vue” component, we have a `handleVote()` function:
@@ -557,9 +598,6 @@ In the “Poll.vue” component, we have a `handleVote()` function:
 const handleVote = async (msgid: string, selectedOption: string | number) => {
   loading.value = true
   try {
-    // Wait for the subscribe operation to complete
-    await waku.subscribe();
-
     // Find the selected poll in the polls array
     let selectedPollIndex = waku.polls.value.findIndex((poll) => poll.msgid === msgid);
 
@@ -568,11 +606,13 @@ const handleVote = async (msgid: string, selectedOption: string | number) => {
       waku.polls.value[selectedPollIndex].message.options[selectedOption].votes += 1;
 
       // Create a reactive copy to trigger reactivity
-      const reactiveCopy = reactive({ ...waku.polls.value[selectedPollIndex].message });
+      const reactiveCopy = reactive({ ...waku.polls.value[selectedPollIndex] });
 
       // Publish the updated poll
-      const stringifiedMessage = JSON.stringify(reactiveCopy);
-      await waku.publish(waku.sender.value, stringifiedMessage, msgid);
+      
+      const stringifiedMessage = JSON.stringify(reactiveCopy.message);
+      
+      await waku.publish(reactiveCopy.sender , stringifiedMessage, reactiveCopy.timestamp, msgid);
 
       // Store the msgid in local storage
       votedPolls.value.push(msgid);

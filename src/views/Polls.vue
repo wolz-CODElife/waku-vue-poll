@@ -1,7 +1,6 @@
 <template>
   <div class="text-center flex flex-col items-center">
     <h1 class="text-3xl">Vote Public Polls 🗳️</h1>
-    <p class="text-gray-600 text-sm"><span class="text-red-400">NOTE:</span> Polls are not stored. <br> They will be lost once you refresh the page. Create a new poll to continue participating.</p>
     <p class="mb-4 font-bold">Polls ({{ waku.polls.value.length }})</p>
     <div class="w-full max-w-lg p-10 h-[calc(100vh-300px)] md:h-[calc(100vh-196px)] overflow-y-auto mx-auto my-auto text-center rounded-xl shadow-lg bg-white" >
       <!-- Blackbox Create a list of polls -->
@@ -52,9 +51,6 @@ const isVoted = (msgid:string) => {
 const handleVote = async (msgid: string, selectedOption: string | number) => {
   loading.value = true
   try {
-    // Wait for the subscribe operation to complete
-    await waku.subscribe();
-
     // Find the selected poll in the polls array
     let selectedPollIndex = waku.polls.value.findIndex((poll) => poll.msgid === msgid);
 
@@ -63,11 +59,13 @@ const handleVote = async (msgid: string, selectedOption: string | number) => {
       waku.polls.value[selectedPollIndex].message.options[selectedOption].votes += 1;
 
       // Create a reactive copy to trigger reactivity
-      const reactiveCopy = reactive({ ...waku.polls.value[selectedPollIndex].message });
+      const reactiveCopy = reactive({ ...waku.polls.value[selectedPollIndex] });
 
       // Publish the updated poll
-      const stringifiedMessage = JSON.stringify(reactiveCopy);
-      await waku.publish(waku.sender.value, stringifiedMessage, msgid);
+      
+      const stringifiedMessage = JSON.stringify(reactiveCopy.message);
+      
+      await waku.publish(reactiveCopy.sender , stringifiedMessage, reactiveCopy.timestamp, msgid);
 
       // Store the msgid in local storage
       votedPolls.value.push(msgid);
@@ -99,6 +97,7 @@ const formatDate = (timestamp: string) => {
 onMounted(() => {
   if (waku.wakuNode && waku.wakuNode.isStarted() && waku.sender.value !== '') {
     waku.subscribe()
+    
   }
 });
 

@@ -124,7 +124,7 @@
 
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Poll } from '../interfaces'
 import { useWaku } from '../composables/waku'
 import {useWalletConnect} from '../composables/client'
@@ -160,9 +160,10 @@ const poll = ref<Poll>({
   }
 })
 const Route = useRoute()
+const router = useRouter()
 const copied = ref<boolean>(false)
 const waku = useWaku()
-const {connectWallet, disconnectWallet} = useWalletConnect()
+const {connectWallet, disconnectWallet, signMessage} = useWalletConnect()
 
 
 
@@ -186,39 +187,50 @@ const copyToClipboard = () => {
 }
 const sendMessage = () => {
   const stringifiedMessage = JSON.stringify(poll.value)
+  const msgid = Date.now() + Math.floor(Math.random() * 90000).toString();
+  const timestamp = new Date().toUTCString()
 
-  // send a message
-  waku.publish(waku.sender.value, stringifiedMessage)
-
-  // reset question state
-  poll.value = {
-    question: "",
-    options: {
-      a: {
-        value: "",
-        votes: 0
-      },
-      b: {
-        value: "",
-        votes: 0
-      },
-      c: {
-        value: "",
-        votes: 0
-      },
-      d: {
-        value: "",
-        votes: 0
-      },
-      e: {
-        value: "",
-        votes: 0
+  // sign message
+  signMessage(msgid, stringifiedMessage).then((signature) => {
+    // send a message
+    waku.publish(signature, stringifiedMessage, timestamp, msgid)
+    // reset question state
+    poll.value = {
+      question: "",
+      options: {
+        a: {
+          value: "",
+          votes: 0
+        },
+        b: {
+          value: "",
+          votes: 0
+        },
+        c: {
+          value: "",
+          votes: 0
+        },
+        d: {
+          value: "",
+          votes: 0
+        },
+        e: {
+          value: "",
+          votes: 0
+        }
       }
     }
-  }
-  onToggle()
-}
+    onToggle()
+    // redirect user to where the new poll is populated
+    if (router.currentRoute.value.path !== "/polls") {
+      router.push("/polls")
+    }
+  }).catch((error) => {
+    console.error("Error sending message", error);
+    
+  })
 
+}
 
 const currentRouteName = computed(() => {
   return Route.name;

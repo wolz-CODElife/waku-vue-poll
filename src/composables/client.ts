@@ -47,20 +47,37 @@ export function useWalletConnect() {
         } else {
         console.log('No wallet');
         }
-  }
+    }
   
     async function disconnectWallet() {
         localStorage.removeItem('senderWalletAddress');
+        localStorage.removeItem('polls');
         // stop waku's light node
         await waku.wakuNode.stop();
         waku.stop()
         waku.sender.value = ""
         waku.status.value = "connecting..."
+        waku.polls.value = []
+    }
+    async function signMessage(msgid: string, stringifiedMessage:string) {
+        const messageToSign = `Message ID: ${msgid}, Content: ${stringifiedMessage}`;
+        let signature;
+        try {
+            signature = await window.ethereum.request({
+                method: 'personal_sign',
+                params: [messageToSign, waku.sender.value],
+            });
+            return signature
+        } catch (signError) {
+            console.error('Error signing the message:', signError);
+            return;
+        }
     }
 
     return {
         connectWallet,
-        disconnectWallet
+        disconnectWallet,
+        signMessage
 	};
 }
     

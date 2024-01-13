@@ -30,7 +30,8 @@ interface Poll {
 
 export const status = ref<string>('connecting...');
 export const sender = ref(localStorage.getItem('senderWalletAddress') ?? '');
-export const polls = ref<Poll[]>([]);
+export const polls = ref<Poll[]>(JSON.parse(localStorage.getItem('polls') ?? '[]'));
+
 
 export const wakuNode = await createLightNode({
 	defaultBootstrap: true,
@@ -125,15 +126,18 @@ export function useWaku() {
 		  // Add the new poll to the array
 		  polls.value.unshift(result);
 		}
+		  
+		if (polls.value.length > 0) {
+			localStorage.setItem('polls', JSON.stringify(polls.value));
+		}
 	  }
 
 	async function unsubscribe() {
 		subscription.unsubscribe([contentTopic])
 	}
 
-	async function publish(sender: string, message: string, msgid: string = Date.now() + Math.floor(Math.random() * 90000).toString()) {	
+	async function publish(sender: string, message: string, timestamp: string = new Date().toUTCString(), msgid: string = Date.now() + Math.floor(Math.random() * 90000).toString()) {	
 		if (!wakuNode || status.value !== 'connected') await start()
-		const timestamp = new Date().toUTCString()
 		
 		try {
 			const protoData = PollQuestionWakuMessage.create({

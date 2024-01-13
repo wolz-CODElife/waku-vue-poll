@@ -12,13 +12,22 @@ When a new user comes to the [app](https://waku-vue-poll.vercel.app), they need 
 After a successfull wallet connection, the navbar interface will change displaying part of the user's wallet address and a button to "Create Poll".
 ![Alt text](image-1.png)
 
-## 2. Creating a poll
+### 2. Creating a poll
 To create a new poll, you need to be authenticated (logged in). After logging, click the button on the right of the navbar(a modal will pop up).
 ![Alt text](image-2.png)
 
-Fill the form, by providing a question in the textbox
+Fill the form, by providing a question in the textbox and click "Create Poll". You'd be asked to sign the new poll using your wallet. After a successfully signing, you'd be redirected to the "/polls" route where all the polls are listed.
 
-## Getting Started
+### 3. Voting
+To vote, navigate to the "/polls" route, where you'd find a list of polls created by other users, if there's no poll then you're the newest user in the session. Proceed by sharing the site link to anotehr user and creating a new poll. Other's should be able to vote your poll as long as the session is live.
+
+![Alt text](image-3.png)
+
+### Logging out
+To end your session or disconnect your wallet from the app and clear the poll list, simple click the cloud button at the center of the navbar
+![Alt text](image-1.png)
+
+## Customizing the app
 
 ### 1. Clone the Project
 Before cloning this project, fork the repository first then run the following command:

@@ -96,8 +96,8 @@
 
         <form class="mx-auto w-[calc(100%-50px)]">
           <!-- Question -->
-          <label for="question" class="block text-gray-700 text-sm font-bold mb-2">Question ({{ questionLength }}/50) </label>
-          <textarea v-model="poll.question" type="text" id="question" placeholder="" required class="shadow border rounded w-full p-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
+          <label for="question" class="block text-gray-700 text-sm font-bold mb-2">Question ({{ poll.question.length }}/100) </label>
+          <textarea v-model="poll.question" type="text" id="question" placeholder="" maxlength="100" required class="shadow border rounded w-full p-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"></textarea>
 
 
           <!-- Options -->
@@ -133,7 +133,6 @@ import {useWalletConnect} from '../composables/client'
 const isOpen = ref<boolean>(false)
 const isModalOpen = ref<boolean>(false)
 const routes = <any>["Home", "Polls"]
-const questionLength = ref<string>("100")
 const poll = ref<Poll>({
   question: "",
   options: {

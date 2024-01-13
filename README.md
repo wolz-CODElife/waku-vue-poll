@@ -2,6 +2,22 @@
 
 Welcome to the Vue 3 + TypeScript + Vite starter template! This template provides a solid foundation for developing Vue.js applications with TypeScript using the Vite build tool. To get started, follow the steps below:
 
+## How the app works
+
+### 1. Authentication
+When a new user comes to the [app](https://waku-vue-poll.vercel.app), they need to connect their wallet to be able to create or vote a poll.
+
+![Alt text](image.png)
+
+After a successfull wallet connection, the navbar interface will change displaying part of the user's wallet address and a button to "Create Poll".
+![Alt text](image-1.png)
+
+## 2. Creating a poll
+To create a new poll, you need to be authenticated (logged in). After logging, click the button on the right of the navbar(a modal will pop up).
+![Alt text](image-2.png)
+
+Fill the form, by providing a question in the textbox
+
 ## Getting Started
 
 ### 1. Clone the Project

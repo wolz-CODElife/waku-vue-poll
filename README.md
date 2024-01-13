@@ -1,6 +1,6 @@
-# Vue 3 + TypeScript + Vite Starter Template
+# WAKU VUE POLL
 
-Welcome to the Vue 3 + TypeScript + Vite starter template! This template provides a solid foundation for developing Vue.js applications with TypeScript using the Vite build tool. To get started, follow the steps below:
+Welcome to the poll app built with Waku and Vue3! This poll app is a simple spin-off of the popular [Kahoot](https://kahoot.com/) with short-lived sessions/storage of the poll.
 
 ## How the app works
 

@@ -20,11 +20,11 @@ I built a real-time voting poll dApp using Vue 3 and @Waku_org, a decentralized 
 
 4/ Peer-to-Peer Messaging:
 - Waku enables peer-to-peer communication, eliminating the need for a centralized server.
-- Participants exchange votes and poll updates directly, enhancing the overall user experience. 🤝
+- Participants exchange votes and poll updates over Waku network 🤝
 
 5/ Privacy First:
 - Waku empowers the dApp with privacy-centric features.
-- Users can cast votes without concerns about metadata harvesting, putting privacy at the forefront of the voting experience. 🛡️🔐
+- Users can cast votes without concerns about metadata harvesting, putting privacy at the forefront of the voting experience. 🛡️🔐 - As for this implementation, messages travel over the network unencrypted, so anyone on the network can access the polls and votes.
 
 6/ Use Cases Beyond Voting:
 - Waku's adaptability extends beyond voting polls, and includes use cases such as:

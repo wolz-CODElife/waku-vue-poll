@@ -451,8 +451,8 @@ export const generateUniqueID = () => {
 };
 
 export function useWalletConnect() {
-    async function connectWallet() {
-        if (window.ethereum) {
+  async function connectWallet() {
+    if (window.ethereum) {
         try {
             // Request account access from the user
             const accounts = await window.ethereum.request({ method: 'eth_accounts' });
@@ -460,8 +460,8 @@ export function useWalletConnect() {
             // Initialize web3 with the current provider
             window.web3 = new Web3(window.ethereum);
     
-            // Get the current MetaMask selected/active wallet
-            const walletAddress = accounts[0];
+            // Use the first account from the accounts array as the current account
+            const walletAddress = accounts.length > 0 ? accounts[0] : null;
             if (walletAddress) {
                 waku.sender.value = walletAddress;
                 // Update waku sender and local storage
@@ -479,10 +479,11 @@ export function useWalletConnect() {
         } catch (error) {
             console.error('Error connecting wallet:', error);
         }
-        } else {
+    } else {
         console.log('No wallet');
-        }
     }
+  }
+
   
     async function disconnectWallet() {
         localStorage.removeItem('senderWalletAddress');

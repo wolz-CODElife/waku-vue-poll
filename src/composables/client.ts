@@ -25,7 +25,7 @@ export function useWalletConnect() {
     async function connectWallet() {
         if (window.ethereum) {
             try {
-                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 window.web3 = new Web3(window.ethereum);
     
                 if (accounts.length > 0 && validateEthereumAddress(accounts[0])) {

@@ -450,39 +450,40 @@ export const generateUniqueID = () => {
   return userAgentHash;
 };
 
+// Validate Ethereum Address
+export const validateEthereumAddress = (address:any) => {
+    return /^(0x)?[0-9a-fA-F]{40}$/.test(address);
+}
+
 export function useWalletConnect() {
-  async function connectWallet() {
-    if (window.ethereum) {
-        try {
-            // Request account access from the user
-            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-            
-            // Initialize web3 with the current provider
-            window.web3 = new Web3(window.ethereum);
+    // Improved connectWallet Function
+    async function connectWallet() {
+        if (window.ethereum) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                window.web3 = new Web3(window.ethereum);
     
-            // Use the first account from the accounts array as the current account
-            const walletAddress = accounts.length > 0 ? accounts[0] : null;
-            if (walletAddress) {
-                waku.sender.value = walletAddress;
-                // Update waku sender and local storage
-                localStorage.setItem('senderWalletAddress', walletAddress);
-            } else {
-                generateUniqueID().then((hashID) => {
-                    const newHash = 'abcdef012345'[Math.floor(Math.random() * 15)] + "x" + hashID.slice(-20)
-                    waku.sender.value = newHash
-                    localStorage.setItem('senderWalletAddress', newHash);
-                });
+                if (accounts.length > 0 && validateEthereumAddress(accounts[0])) {
+                    const walletAddress = accounts[0];
+                    waku.sender.value = walletAddress;
+                    localStorage.setItem('senderWalletAddress', walletAddress);
+                } else {
+                    console.error('Invalid Ethereum address detected. Generating fallback ID.');
+                    generateUniqueID().then((hashID) => {
+                        const newHash = 'abcdef012345'[Math.floor(Math.random() * 12)] + "x" + hashID.slice(-20);
+                        waku.sender.value = newHash;
+                        localStorage.setItem('senderWalletAddress', newHash);
+                    });
+                }
+    
+                await waku.start();
+            } catch (error) {
+                console.error('Error connecting wallet:', error);
             }
-    
-            // Start Waku
-            await waku.start();
-        } catch (error) {
-            console.error('Error connecting wallet:', error);
+        } else {
+            console.log('No Ethereum wallet detected.');
         }
-    } else {
-        console.log('No wallet');
     }
-  }
 
   
     async function disconnectWallet() {
